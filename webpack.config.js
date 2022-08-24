@@ -10,7 +10,10 @@ module.exports = {
       directory: path.join(__dirname, 'dist')
     },
     port: 8889,
-    open: true
+    open: true,
+    client: {
+      logging: 'none',
+    },
   },
   module: {
     rules: [
