@@ -1,117 +1,289 @@
-/**
- * unknown 类型
- */
-
-let a: unknown = 30
-let b = a === 123
-// let c = a + 10 // TS2571: Object is of type 'unknown'.
-
-if (typeof a === 'number') {
-  let d = a + 10
-  console.log(d)
+function log(message: string, userId = 'Not signed in') {
+  const time = new Date().toISOString()
+  console.log(time, message, userId)
 }
 
-console.log(a)
+log('user clicked on a button', 'da763be')
+log('user signed out')
+
+
+type Context = {
+  appId?: string;
+  userId?: string;
+}
+
+function log1(message: string, context: Context = {}) {
+  const time = new Date().toISOString()
+  console.log(time, message, context.userId)
+}
+
+function sumVariadicSafe(...numbers: number []): number {
+  return numbers.reduce((total, cur) => total + cur, 0)
+}
+
+interface Console {
+  log(message?: any, ...optionalParams: any []): void
+}
+
+
+function* createNumbers(): IterableIterator<number> {
+  let n = 0;
+
+  while (1) {
+    yield n++
+  }
+}
+
+let numbers = createNumbers()
+console.log(numbers.next())
+console.log(numbers.next())
+console.log(numbers.next())
+console.log(numbers.next())
+
+type sum = (a: number, b: number) => number
 
 /**
- * number 类型
+ * 调用签名
  */
 
-let oneMillion = 1_000_000 // 等同于1000000
-let twoMillion = 2_000_000 // 等同于2000000
+type Log = (message: string, userId?: string) => void
 
-console.log({
-  oneMillion,
-  twoMillion
+let log2: Log = (message, userId = 'not signed in') => {
+  console.log(message, userId)
+}
+
+
+/**
+ * 上下文类型推导
+ */
+interface TimeFn {
+  (index: number): void
+}
+
+type TimeFn1 = (index: number) => void
+
+type TimeFn2 = {
+  (index: number): void
+}
+function times(
+  fn: TimeFn2,
+  n: number
+) {
+  for (let i = 0; i < n; i++) {
+    fn(i)
+  }
+}
+
+times((n) => console.log(n), 5)
+
+// function timesFn(n) { // Parameter 'n' implicitly has an 'any' type.
+//   console.log(n)
+// }
+
+
+/**
+ * 多态
+ */
+
+// function filter(array, f) {
+//   let result = []
+//   for (let i = 0; i < array.length; i++) {
+//     if (f(result[i])) {
+//       result.push(result[i])
+//     }
+//   }
+
+//   return result
+// }
+
+type Filter = {
+  (array: number [], f: (item: number) => boolean): number [];
+  (array: string [], f: (item: string) => boolean): string [];
+  (array: object [], f: (item: object) => boolean): object [];
+}
+
+type Filter1 = {
+  <T>(array: T [], f: (item: T) => boolean): T []
+}
+type Filter2 = <T>(array: T [], f: (item: T) => boolean) => T []
+
+function filter3<T>(array: T [], f: (item: T) => boolean): T [] {
+  let result = []
+  for (let i = 0; i < array.length; i++) {
+    if (f(array[i])) {
+      result.push(array[i])
+    }
+  }
+  return result
+};
+
+interface Filter4 {
+  <T>(array: T [], f: (item: T) => boolean): T []
+}
+let names = [
+  { firstName: 'beth' },
+  { firstName: 'caitlyn' },
+  { firstName: 'xin' },
+]
+
+const filter4: Filter4 = (array, f) => {
+  let result = []
+  for (let i = 0; i < array.length; i++) {
+    if (f(array[i])) {
+      result.push(array[i])
+    }
+  }
+  return result
+}
+filter3(names, it => it.firstName === 'xin')
+filter4(names, it => it.firstName === 'xin')
+
+// function filter(array, f) {
+//   let result = []
+//   for (let i = 0; i < array.length; i++) {
+//     if (f(result[i])) {
+//       result.push(result[i])
+//     }
+//   }
+
+//   return result
+// }
+
+
+// 类型别名-自动推导
+type F1 = <T>(array: T [], f: (it: T) => boolean) => T []
+type F2 = {
+  <T>(array: T [], f: (it: T) => boolean): T [] 
+}
+
+// 类型别名-主动绑定
+type F3<T> = (array: T [], f: (it: T) => boolean) => T []
+type F4<T> = {
+  (array: T [], f: (it: T) => boolean): T [] 
+}
+
+const f1: F3<number> = (array, f) => {
+  let result = []
+  for (let i = 0; i < array.length; i++) {
+    if (f(array[i])) {
+      result.push(array[i])
+    }
+  }
+  return result
+}
+const f2: F4<string> = (array, f) => {
+  let result = []
+  for (let i = 0; i < array.length; i++) {
+    if (f(array[i])) {
+      result.push(array[i])
+    }
+  }
+  return result
+}
+
+// 接口
+interface F5 {
+  <T>(array: T [], f: (it: T) => boolean): T [] 
+}
+
+// 主动绑定
+interface F6<T> {
+  (array: T [], f: (it: T) => boolean): T [] 
+}
+// 函数
+function f7<T>(array: T [], f: (item: T) => boolean): T [] {
+  let result = []
+  for (let i = 0; i < array.length; i++) {
+    if (f(array[i])) {
+      result.push(array[i])
+    }
+  }
+  return result
+};
+
+
+/**
+ * 实现一个map
+ */
+const map = (array: unknown [], fn: (it: unknown) => unknown ): unknown [] => {
+  const res = []
+  for (let i = 0; i < array.length; i++) {
+    res.push(fn(array[i]))
+  }
+  return res
+}
+
+type Map1 = <T, U>(array: T [], fn: (it: T) => U) => U []
+
+const p = new Promise<number>((resolve) => resolve(46))
+p.then(res => res * 4)
+
+
+/**
+ * 泛型别名
+ */
+
+type MyEvent<T> = {
+  target: T,
+  type: string
+}
+
+type ButtonEvent = MyEvent<HTMLButtonElement>
+
+const myEvent: MyEvent<HTMLButtonElement | null> = {
+  target: document.querySelector('#btn'),
+  type: 'click'
+}
+
+function triggerEvent<T>(event: MyEvent<T>): void {
+  console.log(event)
+}
+
+triggerEvent({
+  target: document.getElementById('btn'),
+  type: 'mouseover'
 })
 
 
 /**
- * 对象
+ * 树节点
  */
 
-let a1: object = {
-  b: 'x'
-}
-// console.log(a1.b) //Property 'b' does not exist on type 'object'.
-
-let a2 = {
-  b: 'x'
+type TreeNode = {
+  value: string
 }
 
-console.log(a2.b)
-const a3: { b: number } = {
-  b: 22
+type LeafNode = TreeNode & {
+  isLeaf: true
 }
 
-const a4 = {
-  b: 23
-}
-let i;
-// let j = i * 3 // Object is possibly 'undefined'.
-
-const a5: {
-  b: number;
-  c?: string;
-  [key: number]: boolean;
-} = {
- b: 3,
- c: 'ss'
-}
-a5.c = '33'
-a5[8] = true
-
-
-/**
- * 类型别名
- */
-
-type Color = 'red'
-let c1: Color = 'red'
-// c1 = 'blue' // Type '"blue"' is not assignable to type '"red"'.
-
-
-/**
- * 并集和交集
- */
-
-type Cat = { name: string, purrs: boolean }
-type Dog = { name: string, barks: boolean, wags: boolean }
-type CatOrDogOrBoth = Cat | Dog
-type CatAndDog = Cat & Dog
-
-const cat1: Cat = { name: 'aa', purrs: true }
-const dog1: Dog = { name: 's', barks: true, wags: true }
-const cat1_dog1: CatOrDogOrBoth = {
-  name: 'aa', purrs: true
-}
-const cat1_dog2: CatOrDogOrBoth = {
-  name: 's', barks: true, wags: true
-}
-const cat1_dog3: CatOrDogOrBoth = {
-  name: 's', barks: true, wags: true, purrs: true
+type InnerNode = TreeNode & {
+  children: [TreeNode] | [TreeNode, TreeNode]
 }
 
-const cat1_dog4: CatAndDog = {
-  name: 's',
-  purrs: true,
-  barks: true,
-  wags: true
+const a: TreeNode = {
+  value: 'a'
 }
 
-/**
- * 枚举类型
- */
-
-enum Language {
-  Chinese,
-  English,
-  Russian
+const b: LeafNode = {
+  value: 'b',
+  isLeaf: true,
+}
+const c: InnerNode = {
+  value: 'c',
+  children: [b]
 }
 
-console.log(Language)
-const g = [3]
-g.push(2)
-const g1 = [true, true, false]
+function mapNode<T extends TreeNode>(
+  node: T,
+  f: (value: string) => string
+): T {
+  return {
+    ...node,
+    value: f(node.value)
+  }
+}
 
-let h: 3 = 3
+let a1 = mapNode(a, _ => _.toLowerCase()) // TreeNode
+let b1 = mapNode(b, _ => _.toLowerCase()) // LeafNode
+let c1 = mapNode(c, _ => _.toLowerCase()) // InnerNode
