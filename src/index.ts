@@ -287,3 +287,90 @@ function mapNode<T extends TreeNode>(
 let a1 = mapNode(a, _ => _.toLowerCase()) // TreeNode
 let b1 = mapNode(b, _ => _.toLowerCase()) // LeafNode
 let c1 = mapNode(c, _ => _.toLowerCase()) // InnerNode
+
+/**
+ * 受限多态
+ */
+
+type HasSides = { numberOfSides: number }
+type SidesHaveLength = { sideLength: number }
+
+function logPerimeter<Shape extends HasSides & SidesHaveLength>(s: Shape): Shape {
+  console.log(s.numberOfSides * s.sideLength)
+  return s
+}
+
+type Square = { numberOfSides: number, sideLength: number }
+const square: Square = { numberOfSides: 4, sideLength: 3 }
+const res = logPerimeter(square)
+
+/**
+ * 受限多态模拟剩余参数
+ */
+
+// function call(
+//   fn: (...args: unknown []) => unknown,
+//   ...args: unknown []
+// ): unknown {
+//   return fn(...args)
+// }
+
+function call<T extends unknown [], U>(
+  fn: (...args: T ) => U,
+  ...args: T
+): U {
+  return fn(...args)
+}
+
+function fill(length: number, value: string): string [] {
+  return Array.from({ length }, () => value)
+}
+
+console.log('call', call(fill, 19, 'a'))
+// console.log('call', call(fill, 19)) // Expected 3 arguments, but got 2.
+// console.log('call', call(fill, 19, 'a', 'z')) // Expected 3 arguments, but got 4.
+
+
+/**
+ * 指定泛型默认类型
+ */
+
+type MyEventWithDefault<T = HTMLElement | null> = {
+  target: T,
+  type: string
+}
+
+type MyEventWithDefault1<T extends HTMLElement | null = HTMLElement | null> = {
+  target: T,
+  type: string
+}
+
+const btn = document.getElementById('btn')
+
+const btnType: MyEventWithDefault = {
+  target: btn,
+  type: 'clicl'
+}
+const btnType1: MyEventWithDefault1 = {
+  target: btn,
+  type: 'clicl'
+}
+
+function is<T>(a: T, b: T): boolean {
+  return a === b
+}
+
+is('string', 'sss')
+// is(true, 'sss') // Argument of type 'string' is not assignable to parameter of type 'boolean'.
+is(true, false)
+is(42, 42)
+
+
+function is1<T>(first: T, ...args: [T, ...T []]): boolean {
+  
+  return args.some(arg => arg === first)
+}
+// is1(1, 2, '3') // Argument of type 'string' is not assignable to parameter of type 'number'.
+is1(1, 2, 3)
+// is1(1) // Expected at least 2 arguments, but got 1.
+// is1(1, [2], ['3'])
