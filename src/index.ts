@@ -91,3 +91,11 @@ function crowToBird(a: Crow): Bird {
 // TS2345: Argument of type '(a: Crow) => Bird' is not assignable to parameter of type '(bird: Bird) => Bird'.
 // Types of parameters 'a' and 'bird' are incompatible.
 // Property 'caw' is missing in type 'Bird' but required in type 'Crow'.
+let sa1 = 123
+function say() {
+  
+}
+
+/**
+ * 细化
+ */
