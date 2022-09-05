@@ -1,7 +1,9 @@
+import { getColums, getCellStyle } from './utils.js'
+import './02-object-type'
 /**
  * 结构型变
  */
-
+console.log(getColums('asfsdf'))
 type ExistingUser = {
   id: number;
   name: string;
