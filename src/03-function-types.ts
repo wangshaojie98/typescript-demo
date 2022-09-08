@@ -39,28 +39,3 @@ function parseInput(input: string | number) {
     formattedInput = input.toUpperCase()
   }
 }
-
-/**
- * 条件类型
- */
-
- interface Part {
-  id: number;
-  name: string;
-  subparts: Part[];
-  updatePart(newName: string): void;
-}
-// 因为never类型不会被索引访问返回
-type FunctionPropertyNames<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never
-}[keyof T]
-
-type R = FunctionPropertyNames<Part> // type R = "updatePart"
-
-
-type FunctionPropertyNames1<T> = {
-  [K in keyof T]: T[K] extends Function ? K : never
-}
-
-type R1 = FunctionPropertyNames1<Part>
-type fnName = R1[keyof R1]
