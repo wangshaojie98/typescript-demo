@@ -1,30 +1,31 @@
-function isValid(date: Date) {
-  return Object.prototype.toString.call(date) === '[object Date]'
-    && !Number.isNaN(date.getTime())
-}
-function ask() {
-  return prompt('When is your birthday?') as string
-}
+/**
+ * 事件发射器
+ */
 
-function parse(birthday: string): Date | null {
-  console.log('birthday: ', {
-    birthday,
-    type: typeof birthday
-  });
-
-  let date = new Date(birthday)
-  
-  if (!isValid(date)) {
-    throw new RangeError('Enter a date in the form YYYY/MM/DD')
-  }
-
-  return date
+interface MyEmitter {
+  emit(channel: string, value: unknown): void;
+  on(event: string, f: (value: unknown) => void): void
 }
 
-let date = parse(ask())
+type RedisClient = {
+  on(event: 'ready', f: () => void ): void;
+  on(event: 'error', f: (e: Error) => void): void;
+  on(event: 'reconnecting', f: (params: { attempt: number, delay: number} ) => void): void;
+}
 
-if (date) {
-  console.info('Date is', date.toISOString())
-} else {
-  alert('Error parsing date for some reason')
+type Events = {
+  ready: void;
+  error: Error;
+  reconnecting: { attempt: number, delay: number }
+}
+
+type Redisclient1 = {
+  on<T extends keyof Events>(
+    event: T,
+    f: (arg: Events[T]) => void
+  ): void;
+  emit<T extends keyof Events>(
+    event: T,
+    args: Events[T]
+  ): void
 }
