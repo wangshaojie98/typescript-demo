@@ -1,141 +1,120 @@
 /**
- * 构造篇
+ * 会用提取和构造之后，我们可以写出很多类型编程了，但是有时候构造或提取的数组元素不固定、字符串长度不确定、对象层级不确定该怎么办？
+ * 用递归解决。
  */
-
-
-// infer 是局部变量
-// type 是类型别名
-
+// Promise 复用
 /**
- * 数组类型
+ * 取出最深层次的Promise的类型
  */
+type DeepPromiseValueType<T> =
+  T extends Promise<infer U>
+    ? DeepPromiseValueType<U>
+    : T
+type p1 = DeepPromiseValueType<Promise<Promise<Promise<Record<string, string>>>>>
 
+// 数组类型
 /**
- * 传入一个数组，数组推入一个元素，返回元组类型
+ * reverse an array
  */
-type Push<Arr extends unknown [], Item> = [...Arr, Item]
-type a1 = Push<[1, 2, 3], 4>
-
-/**
- * 在数组前面添加一个元素
- */
-type Unshift<T extends unknown [], U> = [U, ...T]
-type a2 = Unshift<[1, 2, 3], 0>
-
-/**
- * 合并两个数组，按照下标顺序配对成二元组
- */
-type Zip<One extends unknown[], Other extends unknown[]> = 
-  One extends [infer OneFirst, ...infer OneRest] 
-    ? Other extends [infer OtherFirst, ...infer OtherRest]
-      ? [[OneFirst, OtherFirst], ...Zip<OneRest, OtherRest>]
-      : []
+type ReverseArray<Arr extends unknown []> =
+  Arr extends [...infer Rest, infer Last]
+    ? [Last, ...ReverseArray<Rest>]
     : []
-type a3 = Zip<[1, 2, 3], ['a', 'b', 'c']>
-
-
-
-// type IsTwoTuple<T> = T extends [infer A, ...unknown []] ? (A extends unknown [] ? true : false) : false
-// type IsOneTuple<T> = T extends [infer A, ...unknown []] ? (A extends unknown [] ? false : true) : true
-// type b1 = IsOneTuple<[1, 2, 3]>
-// type b2 = IsTwoTuple<[[1, 2, 3]]>
-
-// type MyConcatZip<
-//   T extends [unknown [], ...unknown []]
-// > = 
-// T extends [infer RestFirst, ...infer RestOther] 
-//   ? IsOneTuple<RestFirst> extends true
-//     ? IsTwoTuple<RestOther> extends true
-//       ? [...RestFirst, ...MyConcatZip<RestOther>]
-//       : [...RestOther]
-//     : []
-//   :[]
-
-// type a4 = MyConcatZip<[[1, 2, 3], ['a', 'b', 'c'], ['d', 'e']]>
-// type MyConcat = {
-//   <
-//     T extends [unknown [], ...unknown []],
-//   >(...args: T) : MyConcatZip<T>
-// }
-// const myConcat1: MyConcat = (...args: [unknown [], ...unknown []]) => {
-//   const firstArr = args[0]
-//   const rest = args.slice(1)
-//   return firstArr.concat(...rest)
-// }
-function myConcat<T, U extends any [] = T []>(firstArr: T [], ...args: U []): T [] | U {
-  return firstArr.concat(...args)
-}
-const myConcatRes = myConcat([1, 2, 3], ['a'])
-
-/**
- * 转换首字符大写
- * 利用内置类型 Uppercase
- */
-type CapitalizeStr<Str extends string> = Str extends `${infer First}${infer Rest}` ? `${Uppercase<First>}${Rest}` : Str
-type s1 = CapitalizeStr<'absss'>
+type p2 = ReverseArray<[1, 2, 3, 4]>
 
 
 /**
- * CamelCase
- * SnakeCase to CamelCase
+ * Does the array contain an element
  */
-type CamelCase<Str extends string> = Str extends `${infer First}_${infer Second}${infer Rest}` ? `${First}${CapitalizeStr<Second>}${CamelCase<Rest>}` : Str
-type s2 = CamelCase<'ab_cd_ef'>
+type IsEqual<A, B> = (A extends B ? true : false) & (B extends A ? true : false);
+  
+type Includes<Arr extends unknown [], FindItem> =
+  Arr extends [infer Item, ...infer Rest]
+    ? IsEqual<Item, FindItem>  extends true 
+      ? true 
+      : Includes<Rest, FindItem>
+    : false
+type p3 = Includes<[1, 2, 3, 4], 4>
+type p4 = Includes<[1, 2, 3, 4], 5>
+
+/**
+ * Delete the specified element
+ */
+type RemoveItem<Arr extends unknown [], SpecifiedItem> =
+  Arr extends [infer Item, ...infer Rest]
+    ? IsEqual<Item, SpecifiedItem> extends true
+      ? [...RemoveItem<Rest, SpecifiedItem>]
+      : [Item, ...RemoveItem<Rest, SpecifiedItem>]
+    : Arr
+type p5 = RemoveItem<[1, 2, 3, 4], 3>
+type p5_1 = RemoveItem<[1, 3, 2, 3, 4], 3>
+type p5_2 = RemoveItem<[1, 2, 3, 4], 5>
 
 
 /**
- * 删除某个子串
+ * Build an array by length
  */
-type DropSubStr<Str extends string, SubStr extends string> = 
-  Str extends `${infer Prefix}${SubStr}${infer Suffix}`
-    ? DropSubStr<`${Prefix}${Suffix}`, SubStr>
+type BuildArray<Length extends number, Elm = unknown, Arr extends unknown [] = []> = 
+  Arr['length'] extends Length
+    ? Arr
+    : BuildArray<Length, Elm, [...Arr, Elm]>
+type BuildArrayResult = BuildArray<5>
+type BuildArrayResult1 = BuildArray<5, 1>
+
+
+// 字符串类型
+/**
+ * Replace all matching elements
+ */
+type ReplaceAll<Str extends string, Matching extends string, ReplaceMent extends string> =
+  Str extends `${infer Prefix}${Matching}${infer Suffix}`
+    ? `${Prefix}${ReplaceMent}${ReplaceAll<Suffix, Matching, ReplaceMent>}`
     : Str
-type s3 = DropSubStr<'abcccddcccsc', 'c'>
+type ReplaceAllResult = ReplaceAll<'esModule Webpack Esbuild Swc-loder', 'e', '-'>
 
 
 /**
- * 在已有的函数参数类型加一个类型
+ * string type to union type
  */
-type AppendArgument<Fn extends Function, Arg> = 
-  Fn extends (...args: infer Args) => infer ReturnType
-    ? (...args: [...Args, Arg]) => ReturnType
-    : Fn
-type f1 = AppendArgument<(name: string) => boolean, number>
+type StringToUnion<Str extends string> = Str extends '' ? never : Str extends `${infer First}${infer Rest}` ? First | StringToUnion<Rest> : Str
+type StringToUnionResult = StringToUnion<'abcde'>
 
 
 /**
- * 索引类型的重新构造
- * 除了可以对 Value 做修改，也可以对 Key 做修改，使用 as，这叫做重映射：
+ * reverse a string
  */
+type ReverseString<Str extends string, Result extends string = ''> = 
+  Str extends `${infer First}${infer Rest}` 
+    ? ReverseString<Rest, `${First}${Result}`> 
+    : Result;
+type ReverseStringResult = ReverseString<'abcde'>
 
-/**
- * 将索引类型的value重复三次
- */
-type MappingRepeat3Value<Obj extends object> = {
-  [key in keyof Obj]: [Obj[key], Obj[key], Obj[key]]
-} 
-type f2 = MappingRepeat3Value<{a: 'a', b: 'b'}>
 
+// object type
 /**
- * 将索引类型 Key 大写
+ * add readonly type to object depth
  */
-type UppercaseMappingKey<Obj extends object> = {
-  [key in keyof Obj as Uppercase<(key & string)>]: Obj[key]
+type DeepReadonly<T extends Record<string, any>> = {
+  readonly [Key in keyof T]: 
+    T[Key] extends object 
+      ? T[Key] extends Function 
+        ? T[Key] 
+        : DeepReadonly<T[Key]>
+      : T[Key]
 }
 
-type f3 = UppercaseMappingKey<{abc: 'a', bac: 'b'}>
-
-/**
- * 过滤属性通过值的类型
- * 如果原来索引的值 Obj[Key] 是 ValueType 类型，索引依然为之前的索引 Key，否则索引设置为 never，never 的索引会在生成新的索引类型时被去掉。
- */
-type FilterByValueType<Obj extends Record<string, any>, FilterType> = 
-  { // as (Obj[Key] extends FilterType ? Key : never)
-    [Key in keyof Obj as (Obj[Key] extends FilterType ? Key : never)]: Obj[Key]
+type obj = DeepReadonly<{
+  a: {
+      b: {
+          c: {
+              f: () => 'dong',
+              d: {
+                  e: {
+                      guang: string
+                  }
+              }
+          }
+      }
   }
-interface Person {
-  name: string;
-  age: number;
-  hobby: string [];
-}
-type f4 = FilterByValueType<Person, number | string>
+}>
+type ObjB = obj['a']['b']['c']
